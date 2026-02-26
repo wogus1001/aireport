@@ -15,6 +15,7 @@ Phase별 개발 계획 및 진행 현황.
 | Phase 4 | Spring Boot 리드 저장 + 알림톡 | ✅ 완료 |
 | Phase 5 | AI 챗봇 + 리포트 캐시 | ✅ 완료 |
 | Phase 6 | 실 API 데이터 연동 + 지역별 리포트 | ✅ 완료 |
+| Phase 6 고도화 2차 | 매출 로직 보정 + 심화 분석 UI 고도화 | ✅ 완료 |
 | Phase 7 | 배포 + nsajang.com 연동 | 📋 계획 |
 
 ---
@@ -174,6 +175,37 @@ Phase별 개발 계획 및 진행 현황.
 - [x] `npm run lint` — 에러 0개
 - [x] `npm run build` — 성공 (10개 라우트)
 - [x] `verify-nextjs` 7개 항목 전체 PASS
+- [x] 코드 리뷰 6개 기준 전체 PASS (any 0건, API Key 보안, 블러 패턴, isUnlocked 흐름)
+
+---
+
+## Phase 6 고도화 2차: 매출 로직 보정 + 심화 분석 UI 고도화 ✅
+
+**완료일**: 2026-02-26
+
+**목표**: 서울 점포당 매출 정밀 보정, 리포트 요약 품질 강화, 심화 분석 UI 진단 카드/스파크라인 추가, 한글 인코딩 안전화.
+
+### 구현 항목
+- [x] `lib/public-apis.ts` — 점포당 매출 정밀 계산 (`seoulPerStoreRevenue`, `buildSeoulStoreCountIndex`, `seoulTradeIndustryKey`)
+- [x] `lib/public-apis.ts` — TTL 기반 인메모리 캐시 (`CacheEntry<T>`, `getCached`, `setCached`)
+- [x] `lib/public-apis.ts` — 주소 범위 필터링 (`filterRowsByAddress`, `addressHints`, `locationTextFromRow`)
+- [x] `lib/public-apis.ts` — `fetchSgisAgeDistribution` 연령대별 전체 밴드 반환 (10대~70대이상)
+- [x] `lib/public-apis.ts` — `fetchSgisIndustryTop` 비율 중복 제거 + `name(ratio%)` 형식
+- [x] `lib/public-apis.ts` — 함수 시그니처 보정: `fetchCommercialTrend(admCd, businessType, address)`, `fetchOpenCloseStats(..., businessType)`, `fetchFranchiseChanges(admCd, businessType, address)`
+- [x] `lib/gemini.ts` — 기본 모델 `gemini-2.5-pro` 변경, `TERM_STYLE_GUIDE` 상수 주입
+- [x] `app/api/report/route.ts` — 캐시 버전 `report-v4`, `hashString` payload 핑거프린트, 요약 품질 필터 보강 (`isNumericOnlySentence`, `hasFragmentedSummary`, `stripNumericOnlySentences`)
+- [x] `app/api/report/route.ts` — `normalizeInlineText`: "예상 월 매출" → "유사 업종 월 매출 참고치" 치환
+- [x] `app/api/chat/route.ts` — `gemini-2.5-flash` 기본 모델, `withTimeout()` 래퍼, 연속 동일 role 메시지 정규화
+- [x] `components/report/LockedSection.tsx` — 진단 카드 4종 (상권 안정성/경쟁 부담도/임대 효율/수요·접근 적합도) + 점수 바 + `Sparkline` SVG 컴포넌트
+- [x] `components/report/LockedSection.tsx` — KR 상수 객체 Unicode 이스케이프 처리 (한글 깨짐 방지)
+- [x] `components/report/PublicSection.tsx` — 소수점 보호 (`DECIMAL_DOT_PLACEHOLDER`), 숫자 단독 문장 필터
+- [x] `app/(routes)/report/[address]/ReportClient.tsx` — `LockedSection`에 `context` prop 전달 (public_metrics, raw_locked_inputs, extended_insights, store_basic_info)
+- [x] `app/api/public-data/route.ts`, `app/api/debug/public-data/route.ts` — 변경된 함수 시그니처 동기화
+
+### 완료 조건
+- [x] `npm run lint` — 에러 0개
+- [x] `npm run build` — 성공 (10개 라우트)
+- [x] `verify-nextjs` 8개 항목 전체 PASS
 - [x] 코드 리뷰 6개 기준 전체 PASS (any 0건, API Key 보안, 블러 패턴, isUnlocked 흐름)
 
 ---

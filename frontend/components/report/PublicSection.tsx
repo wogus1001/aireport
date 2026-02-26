@@ -16,15 +16,9 @@ interface SummaryContent {
 }
 
 function formatNumberText(value: string | undefined): string {
-  if (!value) {
-    return '';
-  }
-
+  if (!value) return '';
   const numeric = Number(value.replace(/,/g, ''));
-  if (!Number.isFinite(numeric)) {
-    return value;
-  }
-
+  if (!Number.isFinite(numeric)) return value;
   return new Intl.NumberFormat('ko-KR').format(numeric);
 }
 
@@ -39,9 +33,7 @@ function formatArea(value: string | undefined): string {
 }
 
 function parseCoordinate(value: string | undefined): number | null {
-  if (!value) {
-    return null;
-  }
+  if (!value) return null;
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
 }
@@ -65,19 +57,9 @@ function keepTruthyItems(items: LabeledValue[]): LabeledValue[] {
 }
 
 function isMeaningfulValue(value: string | undefined): boolean {
-  if (!value) {
-    return false;
-  }
-
+  if (!value) return false;
   const trimmed = value.trim();
-  if (!trimmed) {
-    return false;
-  }
-
-  if (trimmed.toLowerCase() === 'n/a') {
-    return false;
-  }
-
+  if (!trimmed || trimmed.toLowerCase() === 'n/a') return false;
   return !trimmed.includes('데이터 없음');
 }
 
@@ -89,30 +71,37 @@ function sanitizeDisplayText(value: string): string {
     .trim();
 }
 
+const DECIMAL_DOT_PLACEHOLDER = '__DECIMAL_DOT__';
+
+function isNumericOnlyFragment(line: string): boolean {
+  const compact = line.replace(/\s+/g, '').replace(/[.!?]+$/g, '');
+  return /^\d+(?:[.,]\d+)?%?$/.test(compact);
+}
+
+function splitSummaryPoints(mainPart: string): string[] {
+  const protectedText = mainPart.replace(/(\d)\.(\d)/g, `$1${DECIMAL_DOT_PLACEHOLDER}$2`);
+  const rawPoints = protectedText.match(/[^.!?]+[.!?]?/g) ?? [protectedText];
+
+  return rawPoints
+    .map((line) => line.replace(new RegExp(DECIMAL_DOT_PLACEHOLDER, 'g'), '.').trim())
+    .filter((line) => line.length > 0)
+    .filter((line) => !isNumericOnlyFragment(line));
+}
+
 function parseSummaryContent(summary: string): SummaryContent {
   const normalized = sanitizeDisplayText(summary).replace(/\s+/g, ' ').trim();
-  if (!normalized) {
-    return { points: [], recommendation: null };
-  }
+  if (!normalized) return { points: [], recommendation: null };
 
   const recommendationIndex = normalized.indexOf('권장 실행:');
-  const recommendation =
-    recommendationIndex >= 0
-      ? normalized.slice(recommendationIndex).trim()
-      : null;
-  const mainPart =
-    recommendationIndex >= 0
-      ? normalized.slice(0, recommendationIndex).trim()
-      : normalized;
+  const recommendation = recommendationIndex >= 0 ? normalized.slice(recommendationIndex).trim() : null;
+  const mainPart = recommendationIndex >= 0 ? normalized.slice(0, recommendationIndex).trim() : normalized;
 
-  const points = (mainPart.match(/[^.!?]+[.!?]?/g) ?? [mainPart])
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+  const points = splitSummaryPoints(mainPart);
+  if (points.length === 0 && mainPart.length > 0) {
+    return { points: [mainPart], recommendation };
+  }
 
-  return {
-    points,
-    recommendation,
-  };
+  return { points, recommendation };
 }
 
 export default function PublicSection({ address, data }: PublicSectionProps) {
@@ -131,7 +120,7 @@ export default function PublicSection({ address, data }: PublicSectionProps) {
         { label: '보증금', value: formatWon(storeInfo.deposit) },
         { label: '월세', value: formatWon(storeInfo.rent) },
         { label: '권리금', value: formatWon(storeInfo.premium) },
-        { label: '월평균 매출', value: formatWon(storeInfo.monthly_avg_sales) },
+        { label: '평균 매출', value: formatWon(storeInfo.monthly_avg_sales) },
         { label: '협의 가능 여부', value: storeInfo.negotiable ?? '' },
       ])
     : [];
@@ -150,18 +139,8 @@ export default function PublicSection({ address, data }: PublicSectionProps) {
         { label: '직원 수', value: storeInfo.worker_count_label ?? '' },
         { label: '주차 가능', value: storeInfo.parking_count_label ?? '' },
         { label: '화장실', value: storeInfo.restroom_type_label ?? '' },
-        { label: '전화번호', value: storeInfo.phone ?? '' },
         { label: '상세주소', value: storeInfo.address_detail ?? '' },
       ])
-    : [];
-
-  const rawSourceItems: LabeledValue[] = data.raw_locked_inputs
-    ? keepTruthyItems([
-        { label: '예상 매출 원천값', value: sanitizeDisplayText(data.raw_locked_inputs.estimated_revenue_raw) },
-        { label: '상권 변화 원천값', value: sanitizeDisplayText(data.raw_locked_inputs.commercial_trend_raw) },
-        { label: '개업·폐업 원천값', value: sanitizeDisplayText(data.raw_locked_inputs.open_close_stats_raw) },
-        { label: '임대 조건 원천값', value: sanitizeDisplayText(data.raw_locked_inputs.rent_price_raw) },
-      ]).filter((item) => isMeaningfulValue(item.value))
     : [];
 
   const descriptionText = (storeInfo?.description ?? '').trim();
@@ -174,7 +153,7 @@ export default function PublicSection({ address, data }: PublicSectionProps) {
   const insightItems: LabeledValue[] = data.extended_insights
     ? keepTruthyItems([
         { label: '인구통계 연령 분포', value: sanitizeDisplayText(data.extended_insights.sgis_age_distribution) },
-        { label: '인구통계 업종 TOP 5', value: sanitizeDisplayText(data.extended_insights.sgis_industry_top) },
+        { label: '상권 업종 밀집 TOP 5', value: sanitizeDisplayText(data.extended_insights.sgis_industry_top) },
         { label: '지역 상권 추세', value: sanitizeDisplayText(data.extended_insights.regional_trend_timeline) },
         { label: '반경 500m 업종 비중', value: sanitizeDisplayText(data.extended_insights.sdsc_category_breakdown) },
         { label: '네이버 검색량 추세', value: sanitizeDisplayText(data.extended_insights.naver_trend_series) },
@@ -277,20 +256,6 @@ export default function PublicSection({ address, data }: PublicSectionProps) {
           </article>
         ))}
       </div>
-
-      {rawSourceItems.length > 0 ? (
-        <div className='mt-6'>
-          <h3 className='text-base font-semibold text-slate-900'>주소 기반 원천 데이터</h3>
-          <div className='mt-3 grid gap-3 sm:grid-cols-2'>
-            {rawSourceItems.map((item) => (
-              <article key={item.label} className='rounded-xl border border-cyan-100 bg-cyan-50/70 p-4'>
-                <p className='text-xs font-medium text-cyan-800'>{item.label}</p>
-                <p className='mt-2 text-sm leading-relaxed text-slate-800'>{item.value}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
       {insightItems.length > 0 ? (
         <div className='mt-6'>

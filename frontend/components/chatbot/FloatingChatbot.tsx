@@ -102,7 +102,7 @@ export default function FloatingChatbot({ address }: FloatingChatbotProps) {
   };
 
   return (
-    <section className='fixed bottom-4 left-1/2 z-40 w-[calc(100%-1rem)] max-w-md -translate-x-1/2 rounded-2xl border border-slate-200 bg-white shadow-2xl sm:bottom-6'>
+    <section className='w-full rounded-2xl border border-slate-200 bg-white shadow-sm'>
       <div className='border-b border-slate-200 px-4 py-3'>
         <p className='text-sm font-semibold text-slate-900'>AI 상권 도우미</p>
       </div>

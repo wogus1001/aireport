@@ -13,7 +13,7 @@ interface CacheLookupResponse {
   publicDataJson?: string;
 }
 
-const REPORT_CACHE_VERSION = 'report-v3';
+const REPORT_CACHE_VERSION = 'report-v4';
 const MIN_SUMMARY_LENGTH = 220;
 const MIN_SUMMARY_SENTENCE_COUNT = 5;
 
@@ -92,8 +92,26 @@ function normalizeSpringBootUrl(value: string | undefined): string {
   return value.trim().replace(/\/+$/, '');
 }
 
-function buildAddressKey(address: string): string {
-  return encodeURIComponent(`${REPORT_CACHE_VERSION}:${address.trim()}`);
+function hashString(input: string): string {
+  let hash = 0;
+  for (let i = 0; i < input.length; i += 1) {
+    hash = (hash << 5) - hash + input.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+function buildAddressKey(payload: GeminiReportRequest): string {
+  const fingerprintSource = JSON.stringify({
+    address: payload.address.trim(),
+    region: payload.region,
+    public_metrics: payload.public_metrics,
+    raw_locked_inputs: payload.raw_locked_inputs,
+    extended_insights: payload.extended_insights,
+    store_basic_info: payload.store_basic_info,
+  });
+  const fingerprint = hashString(fingerprintSource);
+  return encodeURIComponent(`${REPORT_CACHE_VERSION}:${payload.address.trim()}:${fingerprint}`);
 }
 
 function normalizeText(value: string | undefined): string | null {
@@ -104,7 +122,7 @@ function normalizeText(value: string | undefined): string | null {
   if (!normalized) {
     return null;
   }
-  if (normalized === '?곗씠???놁쓬') {
+  if (normalized === '데이터 없음') {
     return null;
   }
   return normalized;
@@ -113,10 +131,10 @@ function normalizeText(value: string | undefined): string | null {
 function extractRevenueText(source: string | undefined): string {
   const value = normalizeText(source);
   if (!value) {
-    return '?뺤씤 ?꾩슂';
+    return '확인 필요';
   }
 
-  const matched = value.match(/[0-9][0-9,]*\s*留뚯썝/);
+  const matched = value.match(/[0-9][0-9,]*\s*만원/);
   if (matched && matched[0]) {
     return matched[0].replace(/\s+/g, '');
   }
@@ -130,6 +148,32 @@ function countSentences(text: string): number {
     .split(/[\.\!\?]\s+|\n+/)
     .map((part) => part.trim())
     .filter((part) => part.length > 0).length;
+}
+
+function isNumericOnlySentence(text: string): boolean {
+  const compact = text.replace(/\s+/g, '').replace(/[.!?]+$/g, '');
+  return /^\d+(?:[.,]\d+)?%?$/.test(compact);
+}
+
+function hasFragmentedSummary(text: string): boolean {
+  const parts = text
+    .split(/[\.\!\?]\s+|\n+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+  if (parts.length === 0) return true;
+
+  const numericOnlyCount = parts.filter((part) => isNumericOnlySentence(part)).length;
+  const shortCount = parts.filter((part) => part.length < 18).length;
+  return numericOnlyCount > 0 || shortCount >= Math.ceil(parts.length / 2);
+}
+
+function stripNumericOnlySentences(text: string): string {
+  const parts = text
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+  const filtered = parts.filter((part) => !isNumericOnlySentence(part));
+  return filtered.join(' ');
 }
 
 function normalizeStrategies(strategies: Strategy[] | undefined, context: GeminiReportRequest): Strategy[] {
@@ -181,102 +225,112 @@ function buildFactLines(payload: GeminiReportRequest): string[] {
 
   const searchTrend = normalizeText(payload.public_metrics.search_trend);
   if (searchTrend) {
-    facts.push(`- 寃??異붿꽭: ${searchTrend}`);
+    facts.push(`- 검색 트렌드: ${searchTrend}`);
   }
 
   const mainTarget = normalizeText(payload.public_metrics.main_target);
   if (mainTarget) {
-    facts.push(`- 二쇱슂 ?寃? ${mainTarget}`);
+    facts.push(`- 주요 타겟: ${mainTarget}`);
   }
 
   const competitor = normalizeText(payload.public_metrics.competitor_count);
   if (competitor) {
-    facts.push(`- 寃쎌웳 媛뺣룄: ${competitor}`);
+    facts.push(`- 경쟁 강도: ${competitor}`);
   }
 
   const parking = normalizeText(payload.public_metrics.parking_info);
   if (parking) {
-    facts.push(`- 二쇱감/?묎렐?? ${parking}`);
+    facts.push(`- 주차/접근성: ${parking}`);
   }
 
   const estimatedRevenue = normalizeText(payload.raw_locked_inputs.estimated_revenue_raw);
   if (estimatedRevenue) {
-    facts.push(`- 留ㅼ텧 異붿젙 ?먯쿇媛? ${estimatedRevenue}`);
+    facts.push(`- 유사 업종 월 매출 참고치: ${estimatedRevenue}`);
   }
 
   const trend = normalizeText(payload.raw_locked_inputs.commercial_trend_raw);
   if (trend) {
-    facts.push(`- ?곴텒 蹂?? ${trend}`);
+    facts.push(`- 상권 추세: ${trend}`);
   }
 
   const openClose = normalizeText(payload.raw_locked_inputs.open_close_stats_raw);
   if (openClose) {
-    facts.push(`- 媛쒖뾽/?먯뾽 吏?? ${openClose}`);
+    facts.push(`- 개업/폐업 지표: ${openClose}`);
   }
 
   const rent = normalizeText(payload.raw_locked_inputs.rent_price_raw);
   if (rent) {
-    facts.push(`- ?꾨? 議곌굔: ${rent}`);
+    facts.push(`- 임대 조건: ${rent}`);
   }
 
   const ageDistribution = normalizeText(payload.extended_insights?.sgis_age_distribution);
   if (ageDistribution) {
-    facts.push(`- ?곕졊 遺꾪룷: ${ageDistribution}`);
+    facts.push(`- 연령 분포: ${ageDistribution}`);
   }
 
   const regionalTimeline = normalizeText(payload.extended_insights?.regional_trend_timeline);
   if (regionalTimeline) {
-    facts.push(`- ?쒓퀎??異붿꽭: ${regionalTimeline}`);
+    facts.push(`- 지역 추세: ${regionalTimeline}`);
   }
 
   const categoryBreakdown = normalizeText(payload.extended_insights?.sdsc_category_breakdown);
   if (categoryBreakdown) {
-    facts.push(`- 諛섍꼍 ?낆쥌 援ъ꽦: ${categoryBreakdown}`);
+    facts.push(`- 반경 업종 구성: ${categoryBreakdown}`);
   }
 
   const naverTrend = normalizeText(payload.extended_insights?.naver_trend_series);
   if (naverTrend) {
-    facts.push(`- 寃?됰웾 ?쒓퀎?? ${naverTrend}`);
+    facts.push(`- 검색량 추세: ${naverTrend}`);
   }
 
   const kakaoAccessibility = normalizeText(payload.extended_insights?.kakao_accessibility_score);
   if (kakaoAccessibility) {
-    facts.push(`- ?묎렐??吏?? ${kakaoAccessibility}`);
+    facts.push(`- 접근성 점수: ${kakaoAccessibility}`);
   }
 
   const storeName = normalizeText(payload.store_basic_info?.store_name);
   if (storeName) {
-    facts.push(`- 留ㅻЪ紐? ${storeName}`);
+    facts.push(`- 매물명: ${storeName}`);
   }
 
   const monthlySales = normalizeText(payload.store_basic_info?.monthly_avg_sales);
   if (monthlySales) {
-    facts.push(`- 留ㅻЪ ?됯퇏 留ㅼ텧: ${monthlySales}`);
+    facts.push(`- 매물 월 매출: ${monthlySales}`);
   }
 
   return facts.slice(0, 12);
 }
 
 function buildFallbackSummary(payload: GeminiReportRequest): string {
-  const facts = buildFactLines(payload);
-  const factsText =
-    facts.length > 0
-      ? facts.slice(0, 6).join(' ')
-      : '媛?⑺븳 ?몃? 吏?쒓? ?쒗븳?곸씠?댁꽌 怨듦컻 ?곗씠??湲곕컲??蹂댁닔???댁꽍???꾩슂?⑸땲??';
-
   const estimatedRevenue = extractRevenueText(payload.raw_locked_inputs.estimated_revenue_raw);
-  const riskSource =
-    normalizeText(payload.raw_locked_inputs.open_close_stats_raw) ??
-    normalizeText(payload.raw_locked_inputs.commercial_trend_raw) ??
-    '媛쒖뾽쨌?먯뾽 諛??곴텒 蹂?숈꽦';
+  const searchTrend =
+    normalizeText(payload.public_metrics.search_trend) ?? '검색량 추세 데이터가 제한적입니다';
+  const mainTarget =
+    normalizeText(payload.public_metrics.main_target) ?? '주요 타겟 데이터가 제한적입니다';
+  const competitor =
+    normalizeText(payload.public_metrics.competitor_count) ?? '경쟁 강도 데이터가 제한적입니다';
+  const parking =
+    normalizeText(payload.public_metrics.parking_info) ?? '주차/접근성 데이터가 제한적입니다';
+  const trend =
+    normalizeText(payload.raw_locked_inputs.commercial_trend_raw) ?? '상권 추세 데이터가 제한적입니다';
+  const openClose =
+    normalizeText(payload.raw_locked_inputs.open_close_stats_raw) ?? '개업·폐업 데이터가 제한적입니다';
+  const rent =
+    normalizeText(payload.raw_locked_inputs.rent_price_raw) ?? '임대 조건 데이터가 제한적입니다';
+  const timeline =
+    normalizeText(payload.extended_insights?.regional_trend_timeline) ?? '지역 추세 타임라인 데이터가 제한적입니다';
+  const accessibility =
+    normalizeText(payload.extended_insights?.kakao_accessibility_score) ?? '접근성 점수 데이터가 제한적입니다';
 
   return [
-    `${payload.address} 湲곗? ?곴텒? ?좊룞/?뚮퉬 ?뱀꽦怨?寃쎌웳 諛?꾨? ?④퍡 ?먭??댁빞 ?섎뒗 吏??엯?덈떎.`,
-    `?듭떖 ?곗씠???붿빟: ${factsText}`,
-    `?꾩옱 ?뺤씤 媛?ν븳 留ㅼ텧 愿??媛믪? ${estimatedRevenue} ?섏??대ŉ, ?대뒗 ?숈씪 ?낆쥌 ?됯퇏怨??꾨? 議곌굔???④퍡 鍮꾧탳???댁꽍?댁빞 ?⑸땲??`,
-    `${riskSource} 愿?먯뿉???④린 蹂?숈꽦??議댁옱?섎?濡?珥덇린 8二??댁쁺 KPI瑜?蹂댁닔?곸쑝濡??ㅺ퀎?섎뒗 ?묎렐???덉쟾?⑸땲??`,
-    '湲고쉶 ?붿씤? ?寃??곕졊? 吏묒쨷 援ш컙怨??묎렐??吏?쒕? 寃고빀???쒓컙?蹂??곹뭹/梨꾨꼸 理쒖쟻?붿뿉 ?덉뒿?덈떎.',
-    '沅뚯옣 ?ㅽ뻾: 1) ?곸쐞 ?좎엯 ?쒓컙? ?곹뭹 ?ш뎄??2) 寃쎌웳?낆쥌 ?鍮?媛寃?援ъ꽦 李⑤퀎??3) 怨좎젙鍮??鍮??먯씡遺꾧린??二쇨컙 異붿쟻.',
+    `${payload.address} 기준 공개 데이터를 종합하면 기회와 리스크가 함께 존재하는 상권입니다.`,
+    `검색 흐름은 "${searchTrend}"로 확인되며, 주요 고객층은 "${mainTarget}"로 요약됩니다.`,
+    `경쟁 강도는 "${competitor}"로 파악되어 업종 차별화 전략이 필요합니다.`,
+    `유사 업종 월 매출 참고치는 ${estimatedRevenue} 수준으로 확인되며, 실제 매장 매출과는 구분해 해석해야 합니다.`,
+    `임대 조건은 "${rent}"이고, 상권 추세는 "${trend}"로 나타납니다.`,
+    `개업·폐업 흐름은 "${openClose}"이며, 최근 지역 타임라인은 "${timeline}"입니다.`,
+    `접근성 및 방문 편의 측면에서는 "${parking}"와 "${accessibility}" 정보를 함께 검토하는 것이 유효합니다.`,
+    '권장 실행: 초기 4주 동안 유입 채널별 전환율과 객단가를 주간 단위로 점검하고, 경쟁 업종 대비 가격·상품·운영시간 차별화를 동시에 적용하세요.',
   ].join(' ');
 }
 
@@ -285,7 +339,7 @@ function buildFallbackLockedData(payload: GeminiReportRequest): LockedData {
   const riskAlert =
     normalizeText(payload.raw_locked_inputs.open_close_stats_raw) ??
     normalizeText(payload.raw_locked_inputs.commercial_trend_raw) ??
-    '怨듦컻 ?곗씠?곗뿉???쒕졆???덉젙 ?좏샇媛 遺議깊빐 珥덇린 ?댁쁺 由ъ뒪??愿由ш? ?꾩슂?⑸땲??';
+    '공개 데이터 기준 변동성 신호가 불충분하므로 초기 운영 리스크를 보수적으로 관리해야 합니다.';
 
   return {
     estimated_revenue: estimatedRevenue,
@@ -301,18 +355,15 @@ function ensureSummaryQuality(summary: string, payload: GeminiReportRequest): st
   }
 
   const sentenceCount = countSentences(trimmed);
-  if (trimmed.length >= MIN_SUMMARY_LENGTH && sentenceCount >= MIN_SUMMARY_SENTENCE_COUNT) {
+  if (
+    trimmed.length >= MIN_SUMMARY_LENGTH &&
+    sentenceCount >= MIN_SUMMARY_SENTENCE_COUNT &&
+    !hasFragmentedSummary(trimmed)
+  ) {
     return trimmed;
   }
 
-  const facts = buildFactLines(payload);
-  const appendix =
-    facts.length > 0
-      ? ` 蹂댁셿 ?곗씠?? ${facts.slice(0, 5).join(' / ')}.`
-      : '';
-  const priority =
-    ' 권장 실행: 1) 유입 시간대 분석 2) 메뉴/가격 최적화 3) 월별 손익 관리';
-  return `${trimmed}${appendix}${priority}`.trim();
+  return buildFallbackSummary(payload);
 }
 
 function replaceForbiddenTerms(text: string): string {
@@ -323,11 +374,16 @@ function replaceForbiddenTerms(text: string): string {
 }
 
 function normalizeInlineText(text: string): string {
-  return replaceForbiddenTerms(text).replace(/\s+/g, ' ').trim();
+  return replaceForbiddenTerms(text)
+    .replace(/예상\s*월\s*매출/gi, '유사 업종 월 매출 참고치')
+    .replace(/월\s*평균\s*매출/gi, '유사 업종 월 매출 참고치')
+    .replace(/매출\s*추정(?:치)?/gi, '유사 업종 월 매출 참고치')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function normalizeSummaryText(text: string): string {
-  const inline = normalizeInlineText(text);
+  const inline = normalizeInlineText(stripNumericOnlySentences(text));
   const withLineBreaks = inline.replace(/([.!?])\s+/g, '$1\n');
   return withLineBreaks.replace(/\n{3,}/g, '\n\n').trim();
 }
@@ -468,12 +524,15 @@ function toGeminiPrompt(payload: GeminiReportRequest, systemPrompt: string): str
 
 Return ONLY valid JSON. No markdown, no backticks.
 Write all natural-language values in Korean.
+Do not use these terms: "예상 월 매출", "월 평균 매출", "매출 추정".
+Use this exact term instead: "유사 업종 월 매출 참고치".
+Reflect that it is a public-data-based reference value, not actual store sales.
 
 Required JSON schema:
 {
-  "summary": "7-9 Korean sentences. Include at least 5 numeric facts from input. Include both risk and opportunity. Never use the term 'SGIS'. Last sentence must start with '沅뚯옣 ?ㅽ뻾:'",
+  "summary": "7-9 Korean sentences. Include at least 5 numeric facts from input. Include both risk and opportunity. Never use the term 'SGIS'. Last sentence must start with '권장 실행:'",
   "locked_data": {
-    "estimated_revenue": "single concise value in 留뚯썝 ?⑥쐞 when possible",
+    "estimated_revenue": "single concise value in 만원 단위 when possible",
     "risk_alert": "one concrete risk sentence tied to input data",
     "top_3_strategies": [
       { "title": "string", "description": "string" },
@@ -506,7 +565,7 @@ export async function POST(request: Request) {
     };
 
     const springBootUrl = normalizeSpringBootUrl(process.env.SPRING_BOOT_URL);
-    const addressKey = buildAddressKey(normalizedPayload.address);
+    const addressKey = buildAddressKey(normalizedPayload);
 
     if (springBootUrl) {
       const cachedReport = await getCachedReport(springBootUrl, addressKey);

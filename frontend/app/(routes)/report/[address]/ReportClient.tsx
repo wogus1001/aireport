@@ -173,7 +173,15 @@ export default function ReportClient({ address, reportData, region }: ReportClie
         </div>
 
         <div className={isUnlocked ? '' : 'blur-sm pointer-events-none select-none'}>
-          <LockedSection data={displayData.locked_data} />
+          <LockedSection
+            data={displayData.locked_data}
+            context={{
+              public_metrics: displayData.public_metrics,
+              raw_locked_inputs: displayData.raw_locked_inputs,
+              extended_insights: displayData.extended_insights,
+              store_basic_info: displayData.store_basic_info,
+            }}
+          />
         </div>
 
         {!isUnlocked ? <UnlockCTA onClick={() => setIsModalOpen(true)} /> : null}

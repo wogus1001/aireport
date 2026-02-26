@@ -4,6 +4,50 @@
 
 ---
 
+## [세션 9] Phase 6 고도화 2차 — 매출 로직 보정 + 심화 분석 UI 고도화 — 2026-02-26
+
+### Phase 6 고도화 2차 (Codex 구현 / Claude Code 검증)
+
+- `lib/public-apis.ts`
+  - 점포당 매출 정밀 계산: `seoulPerStoreRevenue`, `buildSeoulStoreCountIndex`, `seoulTradeIndustryKey`
+  - TTL 기반 인메모리 캐시: `CacheEntry<T>`, `getCached`, `setCached`
+  - 주소 범위 필터링: `filterRowsByAddress`, `addressHints`, `locationTextFromRow`
+  - `fetchSgisAgeDistribution` — 연령대별 전체 밴드 반환 (10대~70대이상)
+  - `fetchSgisIndustryTop` — 비율 중복 제거, `name(ratio%)` 형식
+  - 함수 시그니처 보정: `fetchCommercialTrend`, `fetchOpenCloseStats`, `fetchFranchiseChanges`
+  - `publicApiFallbacks` 값 한국어 수정 (전 세션 이슈 해결)
+- `lib/gemini.ts` — 기본 모델 `gemini-2.5-pro`, `TERM_STYLE_GUIDE` 상수 주입
+- `app/api/report/route.ts`
+  - 캐시 키 `report-v4` + `hashString` payload 핑거프린트
+  - 요약 품질 필터: `isNumericOnlySentence`, `hasFragmentedSummary`, `stripNumericOnlySentences`
+  - `normalizeInlineText`: "예상 월 매출" → "유사 업종 월 매출 참고치" 치환
+  - `as GeminiReportRequest` → `satisfies GeminiReportRequest` 수정 (전 세션 이슈 해결)
+- `app/api/chat/route.ts` — `gemini-2.5-flash` 기본 모델, `withTimeout()` 래퍼, role 정규화
+- `components/report/LockedSection.tsx`
+  - 진단 카드 4종: 상권 안정성/경쟁 부담도/임대 효율/수요·접근 적합도 + 점수 바
+  - `Sparkline` SVG 컴포넌트 (폴리라인 차트)
+  - KR 상수 객체 Unicode 이스케이프 처리 (한글 깨짐 방지)
+  - `LockedSectionContext` prop 추가
+- `components/report/PublicSection.tsx` — 소수점 보호, 숫자 단독 문장 필터
+- `app/(routes)/report/[address]/ReportClient.tsx` — `context` prop → `LockedSection` 전달
+- `app/api/public-data/route.ts`, `app/api/debug/public-data/route.ts` — 시그니처 동기화
+
+### 검증 결과
+- `npm run lint` — 에러/경고 0개
+- `npm run build` — 성공 (10개 라우트)
+- `verify-nextjs` 8개 항목 전체 PASS
+  - Check 1 TypeScript any: 0건 ✅
+  - Check 2 API Key NEXT_PUBLIC_ 오용: 0건 ✅
+  - Check 3 클라이언트 외부 도메인 fetch: 0건 ✅
+  - Check 4 isUnlocked → onSuccess 콜백 후에만 전환 ✅
+  - Check 5 블러 패턴 (`blur-sm pointer-events-none select-none`) ✅
+  - Check 6 서버 전용 env 변수 `app/api/` 경로에만 존재 ✅
+  - Check 7 Gemini 백틱 전처리 ✅
+  - Check 8 debug 엔드포인트 NODE_ENV guard ✅
+- 코드 리뷰 6개 기준 전체 PASS
+
+---
+
 ## [세션 8] Phase 6 고도화 — 공공 API 실연동 복구 + Gemini 타임아웃 수정 — 2026-02-26
 
 ### Phase 6 고도화: 공공 API 실연동 복구 + UI 품질 보강 (Codex 구현 / Claude Code 검증)
