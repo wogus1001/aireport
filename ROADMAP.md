@@ -210,14 +210,19 @@ Phase별 개발 계획 및 진행 현황.
 
 ---
 
-## Phase 7: 배포 + nsajang.com 연동 📋
+## Phase 7: 배포 + nsajang.com 연동 🔄
 
 **목표**: 프로덕션 배포 및 nsajang.com 트래픽 연동.
 
-### 구현 항목
+### 코드 정리 (완료)
+- [x] UTM 추적 전체 제거 — 단일 내부 유입 경로로 불필요 판단 (8개 파일)
+- [x] `WebConfig.java` — `nsajang.com`, `www.nsajang.com` CORS 제거 (BFF 패턴으로 불필요, `localhost:3000` 유지)
+- [x] `HealthController.java` — `GET /api/health` 유지 (Railway/AWS 컨테이너 헬스 모니터링용)
+
+### 배포 (미완료)
 - [ ] Next.js → Vercel 배포
-- [ ] Spring Boot → AWS EC2 또는 Railway 배포
+- [ ] Spring Boot → Railway 또는 AWS EC2 배포
 - [ ] MySQL → AWS RDS 또는 PlanetScale
 - [ ] 도메인 연동 (nsajang.com/report/...)
-- [ ] UTM 파라미터 추적 세팅
+- [ ] 솔라피 API 키 발급 후 알림톡 활성화
 - [ ] 토스(Toss) 금융 생태계 연동 준비 (결제/대출 상품 연결 PoC)

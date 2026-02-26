@@ -42,6 +42,7 @@ const ERROR_LOCKED_DATA: LockedData = {
 };
 
 export default function ReportClient({ address, reportData, region }: ReportClientProps) {
+  const isChatbotEnabled = false;
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -197,7 +198,7 @@ export default function ReportClient({ address, reportData, region }: ReportClie
         }}
       />
 
-      {isUnlocked ? <FloatingChatbot address={address} /> : null}
+      {isChatbotEnabled && isUnlocked ? <FloatingChatbot address={address} /> : null}
     </main>
   );
 }

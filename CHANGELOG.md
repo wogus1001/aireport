@@ -4,6 +4,31 @@
 
 ---
 
+## [세션 10] Phase 7 코드 정리 — UTM 제거 + WebConfig 정리 — 2026-02-26
+
+### 변경 배경
+내부 플랫폼 버튼 → 카카오톡 자동 발송 구조로 외부 유입 추적 불필요 판단.
+BFF 패턴으로 브라우저가 Spring Boot를 직접 호출하지 않으므로 프로덕션 CORS도 불필요.
+
+### 변경 파일 (8개)
+
+**Frontend**
+- `app/(routes)/report/[address]/page.tsx` — `utm_source`, `utm_medium`, `utm_campaign` searchParams 및 변수·`ReportClient` 전달 props 제거
+- `app/(routes)/report/[address]/ReportClient.tsx` — `utmSource`, `utmMedium`, `utmCampaign` props 인터페이스·함수 시그니처·`LeadCaptureModal` 전달 제거
+- `components/modal/LeadCaptureModal.tsx` — UTM props 인터페이스·함수 시그니처·fetch body 제거
+- `app/api/leads/route.ts` — `LeadPayload`, `SpringLeadRequest` UTM 필드 및 파싱·전달 코드 제거
+
+**Backend**
+- `dto/LeadRequestDto.java` — `utmSource`, `utmMedium`, `utmCampaign` 필드·getter·setter 제거
+- `entity/Lead.java` — `utm_source`, `utm_medium`, `utm_campaign` 컬럼·getter·setter 제거
+- `service/LeadService.java` — UTM 매핑 3줄 제거
+- `config/WebConfig.java` — `nsajang.com`, `www.nsajang.com` 제거 → `localhost:3000`만 유지
+
+### 유지 파일
+- `controller/HealthController.java` — 변경 없음 (Railway/AWS 컨테이너 헬스 모니터링용)
+
+---
+
 ## [세션 9] Phase 6 고도화 2차 — 매출 로직 보정 + 심화 분석 UI 고도화 — 2026-02-26
 
 ### Phase 6 고도화 2차 (Codex 구현 / Claude Code 검증)

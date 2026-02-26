@@ -277,5 +277,11 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
     store_basic_info: storeBasicInfo,
   };
 
-  return <ReportClient address={address} reportData={reportData} region={region} />;
+  return (
+    <ReportClient
+      address={address}
+      reportData={reportData}
+      region={region}
+    />
+  );
 }
