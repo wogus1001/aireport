@@ -1,0 +1,31 @@
+# Dependencies
+frontend/node_modules/
+backend/node_modules/
+
+# Build outputs
+frontend/.next/
+backend/target/
+
+# Environment variables (API keys)
+.env.local
+.env*.local
+frontend/.env.local
+frontend/.env*.local
+backend/.env.local
+backend/src/main/resources/application-secret.yml
+
+# Logs
+frontend/*.log
+backend/*.log
+*.log
+
+# MCP / IDE
+.serena/
+.playwright-mcp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Serena project cache
+.serena/

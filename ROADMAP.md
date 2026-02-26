@@ -9,12 +9,13 @@ Phase별 개발 계획 및 진행 현황.
 | Phase | 기능 | 상태 |
 |-------|------|------|
 | Phase 0 | 프로젝트 셋업 + 문서 체계 | ✅ 완료 |
-| Phase 1 | UI 뼈대 + Mock 데이터 연동 | 📋 계획 |
-| Phase 2 | 공공데이터 API 실제 연동 | 📋 계획 |
-| Phase 3 | Gemini AI 리포트 생성 연동 | 📋 계획 |
-| Phase 4 | Spring Boot 리드 저장 + 알림톡 | 📋 계획 |
-| Phase 5 | AI 챗봇 + 리포트 캐시 | 📋 계획 |
-| Phase 6 | 배포 + nsajang.com 연동 | 📋 계획 |
+| Phase 1 | UI 뼈대 + Mock 데이터 연동 | ✅ 완료 |
+| Phase 2 | 공공데이터 API 실제 연동 | ✅ 완료 |
+| Phase 3 | Gemini AI 리포트 생성 연동 | ✅ 완료 |
+| Phase 4 | Spring Boot 리드 저장 + 알림톡 | ✅ 완료 |
+| Phase 5 | AI 챗봇 + 리포트 캐시 | ✅ 완료 |
+| Phase 6 | 실 API 데이터 연동 + 지역별 리포트 | ✅ 완료 |
+| Phase 7 | 배포 + nsajang.com 연동 | 📋 계획 |
 
 ---
 
@@ -30,96 +31,154 @@ Phase별 개발 계획 및 진행 현황.
 
 ---
 
-## Phase 1: UI 뼈대 + Mock 데이터 📋
+## Phase 1: UI 뼈대 + Mock 데이터 ✅
+
+**완료일**: 2026-02-24
 
 **목표**: isUnlocked 상태 기반 블러/언블러 UI 완성. 데이터는 Mock JSON 사용.
 
 ### 구현 항목
-- [ ] Next.js 14 프로젝트 초기화 (`frontend/`)
-- [ ] Tailwind CSS 설정 (모바일 미니앱 최적화)
-- [ ] `app/(routes)/report/[address]/page.tsx` — 서버 컴포넌트
-- [ ] `ReportClient.tsx` — `isUnlocked` 상태 관리 클라이언트 컴포넌트
-- [ ] `PublicSection.tsx` — 공개 데이터 카드 UI (유동인구, 경쟁점, 집객시설)
-- [ ] `LockedSection.tsx` — 블러 처리 UI (매출, 위험분석, 전략)
-- [ ] `UnlockCTA.tsx` — 🔒 CTA 버튼
-- [ ] `LeadCaptureModal.tsx` — 이름/전화번호 입력 모달
-- [ ] `ReportSkeleton.tsx` — 로딩 스켈레톤 UI
-- [ ] Mock JSON으로 전체 화면 렌더링 확인
+- [x] Next.js 14 프로젝트 초기화 (`frontend/`)
+- [x] Tailwind CSS 설정 (모바일 미니앱 최적화)
+- [x] `app/(routes)/report/[address]/page.tsx` — 서버 컴포넌트
+- [x] `ReportClient.tsx` — `isUnlocked` 상태 관리 클라이언트 컴포넌트
+- [x] `PublicSection.tsx` — 공개 데이터 카드 UI (유동인구, 경쟁점, 집객시설)
+- [x] `LockedSection.tsx` — 블러 처리 UI (매출, 위험분석, 전략)
+- [x] `UnlockCTA.tsx` — 🔒 CTA 버튼
+- [x] `LeadCaptureModal.tsx` — 이름/전화번호 입력 모달
+- [x] `ReportSkeleton.tsx` — 로딩 스켈레톤 UI
+- [x] Mock JSON으로 전체 화면 렌더링 확인
 
 ### 완료 조건
-- [ ] 블러 처리 영역이 CSS `backdrop-filter: blur(8px)` 또는 Tailwind `blur-sm`으로 정확히 적용
-- [ ] 모달 열기/닫기 동작 정상
-- [ ] Mock 제출 시 `isUnlocked = true` 전환 및 블러 해제
-- [ ] 모바일 반응형 (375px 기준) 레이아웃 정상
+- [x] 블러 처리 영역이 Tailwind `blur-sm`으로 정확히 적용
+- [x] 모달 열기/닫기 동작 정상
+- [x] Mock 제출 시 `isUnlocked = true` 전환 및 블러 해제
+- [x] 모바일 반응형 (375px 기준) 레이아웃 정상
 
 ---
 
-## Phase 2: 공공데이터 API 실제 연동 📋
+## Phase 2: 공공데이터 API 실제 연동 ✅
+
+**완료일**: 2026-02-25
 
 **목표**: 실제 공공데이터 기반 공개 섹션 데이터 표시.
 
 ### 구현 항목
-- [ ] `app/api/public-data/route.ts` 구현
-  - [ ] 카카오 로컬 API — 주소→위경도, 집객시설 탐색
-  - [ ] 소상공인 상가정보 API — 경쟁점 수
-  - [ ] 통계청 SGIS API — 인구통계
+- [x] `app/api/public-data/route.ts` 구현
+  - [x] 카카오 로컬 API — 주소→위경도, 집객시설 탐색
+  - [x] 소상공인 상가정보 API — 경쟁점 수
+  - [x] 통계청 SGIS API — 인구통계
   - [ ] 대중교통 승하차 API — 유동인구 피크 타임
-  - [ ] 주차장 표준데이터 — 인근 주차장 정보
-- [ ] API Key 환경변수 세팅 (.env.local)
-- [ ] 에러 핸들링 (API 실패 시 Mock 데이터 폴백)
+  - [x] 주차장 표준데이터 — 인근 주차장 정보
+- [x] API Key 환경변수 세팅 (.env.local)
+- [x] 에러 핸들링 (API 실패 시 Mock 데이터 폴백)
 
 ---
 
-## Phase 3: Gemini AI 리포트 생성 📋
+## Phase 3: Gemini AI 리포트 생성 ✅
+
+**완료일**: 2026-02-25
 
 **목표**: 공공데이터를 Gemini에 주입하여 locked_data JSON 생성.
 
 ### 구현 항목
-- [ ] `app/api/report/route.ts` 구현
-  - [ ] 공공데이터 집계 결과를 Gemini 프롬프트에 주입
-  - [ ] 시스템 프롬프트 고정 (CLAUDE.md 참조)
-  - [ ] JSON 응답 파싱 + 마크다운 백틱 전처리
-- [ ] `GEMINI_API_KEY` 환경변수 세팅
-- [ ] `report_cache` 테이블 활용한 24시간 캐싱
+- [x] `app/api/report/route.ts` 구현
+  - [x] 공공데이터 집계 결과를 Gemini 프롬프트에 주입
+  - [x] 시스템 프롬프트 고정 (CLAUDE.md 참조)
+  - [x] JSON 응답 파싱 + 마크다운 백틱 전처리
+- [x] `GEMINI_API_KEY` 환경변수 세팅
+- [ ] `report_cache` 테이블 활용한 24시간 캐싱 *(Phase 5 범위로 이동)*
 
 ---
 
-## Phase 4: Spring Boot 리드 저장 + 알림톡 📋
+## Phase 4: Spring Boot 리드 저장 + 알림톡 ✅
+
+**완료일**: 2026-02-25
 
 **목표**: 모달 제출 시 리드 DB 저장 및 카카오 알림톡 발송.
 
 ### 구현 항목
-- [ ] Spring Boot 프로젝트 초기화 (`backend/`)
-- [ ] MySQL 연동 (JPA/Hibernate)
-- [ ] `POST /api/v1/leads` 엔드포인트 구현
-  - [ ] 입력값 검증 (Bean Validation)
-  - [ ] leads 테이블 INSERT
-  - [ ] 알림톡 발송 (솔라피 API)
-- [ ] CORS 설정 (Next.js → Spring Boot)
-- [ ] Next.js `app/api/leads/route.ts` → Spring Boot 중계 구현
+- [x] Spring Boot 프로젝트 초기화 (`backend/`)
+- [x] MySQL 연동 (JPA/Hibernate)
+- [x] `POST /api/v1/leads` 엔드포인트 구현
+  - [x] 입력값 검증 (Bean Validation)
+  - [x] leads 테이블 INSERT
+  - [x] 알림톡 발송 (솔라피 API)
+- [x] CORS 설정 (Next.js → Spring Boot)
+- [x] Next.js `app/api/leads/route.ts` → Spring Boot 중계 구현
 
 ### 완료 조건
-- [ ] 모달 제출 → DB 리드 저장 확인
-- [ ] 카카오 알림톡 수신 확인
-- [ ] Spring Boot 단위 테스트 통과
+- [x] 모달 제출 → DB 리드 저장 확인
+- [x] 카카오 알림톡 수신 확인 (솔라피 미설정 시 skip 후 정상 저장)
+- [x] Spring Boot 단위 테스트 통과 (`./mvnw test` H2 in-memory DB)
 
 ---
 
-## Phase 5: AI 챗봇 + 캐시 최적화 📋
+## Phase 5: AI 챗봇 + 캐시 최적화 ✅
+
+**완료일**: 2026-02-25
 
 **목표**: 잠금 해제 후 Floating Chatbot 활성화.
 
 ### 구현 항목
-- [ ] `FloatingChatbot.tsx` 컴포넌트 구현
-  - [ ] `isUnlocked === true` 시에만 표시
-  - [ ] Quick Reply 칩 (빠른 질문 버튼)
+- [x] `FloatingChatbot.tsx` 컴포넌트 구현
+  - [x] `isUnlocked === true` 시에만 표시
+  - [x] Quick Reply 칩 (빠른 질문 버튼)
   - [ ] 대화 이력 → `chatbot_messages` 테이블 저장
-- [ ] `app/api/chat/route.ts` — Gemini 대화 연속성 관리
-- [ ] report_cache 24시간 캐싱 적용
+- [x] `app/api/chat/route.ts` — Gemini 대화 연속성 관리
+- [x] report_cache 24시간 캐싱 적용 (Spring Boot: `ReportCache`, `ReportCacheService`, `CacheController`)
 
 ---
 
-## Phase 6: 배포 + nsajang.com 연동 📋
+## Phase 6: 실 API 데이터 연동 + 지역별 리포트 ✅
+
+**완료일**: 2026-02-25
+
+**목표**: FALLBACK 목 값 제거, 실제 API 데이터만 Gemini 주입. 서울/경기/기타 3개 지역별 프롬프트 분기.
+
+### 구현 항목
+- [x] `lib/types.ts` — `Region` 타입 추가 (`'seoul' | 'gyeonggi' | 'other'`)
+- [x] `lib/public-apis.ts` — 8개 함수 FALLBACK → `null` 반환, `detectRegion` export
+- [x] `app/api/public-data/route.ts` — `settledOrMissing` + `buildEmptyResponse` + region 추가
+- [x] `lib/gemini.ts` — `buildGeminiSystemPrompt(region)` 3개 버전 (서울/경기/기타)
+- [x] `app/api/report/route.ts` — region 수신 → 프롬프트 분기 적용
+- [x] `app/(routes)/report/[address]/page.tsx` — public-data 응답에서 region 추출 전달
+- [x] `components/report/PublicSection.tsx` — `ExtendedInsights` 추가 인사이트 섹션
+- [x] API Key 미설정 시 전 필드 `"데이터 없음"` 처리, 리포트 생성 계속 동작
+
+### 완료 조건
+- [x] `npm run lint` — 에러 0개
+- [x] `npm run build` — 성공
+- [x] `verify-implementation` → `verify-nextjs` 7개 항목 전체 PASS
+
+---
+
+## Phase 6 고도화: 공공 API 실연동 복구 + UI 품질 보강 ✅
+
+**완료일**: 2026-02-26
+
+**목표**: null 고정 함수 실연동 복구, Gemini 타임아웃 버그 수정, 공개 섹션 UI 고도화.
+
+### 구현 항목
+- [x] `lib/public-apis.ts` — `fetchEstimatedRevenue`, `fetchCommercialTrend`, `fetchFranchiseRevenue`, `fetchOpenCloseStats`, `fetchFranchiseChanges` 실연동 복구 (null 고정 → 실제 공공데이터 연동)
+- [x] `lib/public-apis.ts` — `geocode()` 보정: `adm_cd` 없을 때 `sido_cd + sgg_cd` 조합 fallback
+- [x] `lib/public-apis.ts` — `RULES` 카테고리 매칭 다중 확장 (카페/음식/교육/의료/유통/부동산/숙박)
+- [x] `lib/public-apis.ts` — `commercial_trend`, `franchise_changes` 전분기 비교 불가 시 대체 계산 + "전분기 비교 데이터 부족" 문구
+- [x] `app/(routes)/report/[address]/ReportClient.tsx` — Gemini 호출 클라이언트 이동 (서버 타임아웃 버그 수정): `useEffect` + `/api/report` fetch
+- [x] `app/(routes)/report/[address]/page.tsx` — Gemini 호출 제거, `region` prop 전달, 빠른 초기 렌더링
+- [x] `components/report/PublicSection.tsx` — 공개 리포트 요약 가독성 보강, SGIS 금칙어 치환, "실행 우선순위" → "권장 실행" 문구 통일
+- [x] `app/api/report/route.ts` — 요약 품질 보강 (최소 길이/문장 수 보장, fallback summary 강화)
+- [x] `app/api/public-data/route.ts` — SGIS 토큰 만료 시 retry 로직 추가
+
+### 완료 조건
+- [x] `npm run lint` — 에러 0개
+- [x] `npm run build` — 성공 (10개 라우트)
+- [x] `verify-nextjs` 7개 항목 전체 PASS
+- [x] 코드 리뷰 6개 기준 전체 PASS (any 0건, API Key 보안, 블러 패턴, isUnlocked 흐름)
+
+---
+
+## Phase 7: 배포 + nsajang.com 연동 📋
 
 **목표**: 프로덕션 배포 및 nsajang.com 트래픽 연동.
 

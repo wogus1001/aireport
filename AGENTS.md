@@ -23,7 +23,7 @@
 | `CHANGELOG.md` | 완료 이력 |
 | `.claude/skills/**` | 스킬 파일 |
 
-### 구현 에이전트 전용 (Read/Write)
+### Codex 전용 (Read/Write)
 
 | 파일 | 용도 |
 |------|------|
@@ -36,7 +36,7 @@
 
 ### 상호작용 (Cross-Reference)
 
-| 파일 | Claude Code | 구현 에이전트 |
+| 파일 | Claude Code | Codex |
 |------|-------------|--------------|
 | `handoff.md` | ✅ Write | 📖 Read — `구현 스펙` 섹션만 |
 | `ARCHITECTURE.md` | ✅ Write | 📖 Read — 폴더 구조·패턴 파악 |
@@ -49,7 +49,7 @@
 
 ## 역할 분담
 
-| 작업 | Claude Code | 구현 에이전트 |
+| 작업 | Claude Code | Codex |
 |------|-------------|--------------|
 | 아키텍처 설계 | ✅ | ❌ |
 | API 명세 작성 | ✅ | ❌ |
@@ -66,31 +66,97 @@
 
 ## 워크플로우
 
+### 세션 프롬프트 (복사해서 사용)
+
+#### 🔵 Claude Code
+
+**① 세션 시작 + 스펙 준비**
 ```
-Plan → Implement → Verify → Simplify
+handoff.md 읽고 현재 Phase, 직전 작업, 다음 TODO 브리핑해줘.
+다음 Phase Codex 스펙이 없으면 ARCHITECTURE.md, SCHEMA.md 참조해서 작성해줘.
+이미 있으면 검토 후 보완 필요 시만 업데이트해줘.
 ```
 
-### Plan (Claude Code)
-1. `handoff.md` 읽어 현재 Phase 및 이슈 파악
-2. `ARCHITECTURE.md` / `SCHEMA.md` 참조하여 설계
-3. 구현 스펙 작성 (파일 경로, 컴포넌트명, API 경로, 메서드 시그니처 포함)
-4. 구현 에이전트에게 스펙 전달
+**② 세션 종료**
+```
+수고했어
+```
 
-### Implement (구현 에이전트)
-1. Claude Code가 작성한 스펙대로만 구현
-2. 스펙에 없는 파일/기능 임의 추가 금지
-3. 새 패키지/의존성 추가 시 Claude Code 먼저 승인 요청
+---
 
-### Verify (Claude Code)
-1. `npm run lint` 실행 — ESLint 에러 0개 확인
-2. `npm run build` 실행 — 빌드 성공 확인
-3. `./mvnw test` 실행 — Spring Boot 테스트 통과
-4. Playwright로 UI 동작 시각 확인 (isUnlocked 블러/언블러)
-5. `/manage-skills` 실행 — verify 스킬 업데이트
+#### 🟠 Codex
 
-### Simplify
-- 구현 후 불필요한 추상화, 중복 코드 제거
-- `any` 타입 제거, 명시적 타입 보강
+**③ 세션 시작**
+```
+아래 파일들을 순서대로 읽어.
+1. CLAUDE.md → 코드 컨벤션, 수정 허용/금지 파일 확인
+2. handoff.md → "Codex 구현 스펙" 섹션만 읽고 구현
+규칙:
+- .md 파일은 절대 수정하지 마
+- 허용 파일 목록 외 파일 생성·수정 금지
+- package.json / pom.xml 패키지 추가 필요 시 즉시 중단하고 나에게 알려줘
+- TypeScript any 사용 금지
+```
+
+**④ 구현 완료 후 보고**
+```
+구현 완료 후 반드시 아래를 실행하고 결과를 포함해서 보고해줘:
+- npm run lint
+- npm run build
+✅ 완료된 파일:
+- ...
+❌ lint/build 에러 또는 미완료 이슈:
+- (있으면 작성)
+```
+
+> 계속 개발이 필요하면 ③'로 반복, 완전히 끝나면 아래 ⑤로 진행
+
+**③' 추가 구현 (선택)**
+```
+[구현할 내용 직접 지시]
+규칙은 ③과 동일. 완료 후 ④ 형식으로 보고해줘.
+```
+
+---
+
+#### 🔵 Claude Code (모든 구현 완료 후)
+
+**⑤ 코드 리뷰**
+```
+Codex가 Phase N 구현 완료했어. 코드 리뷰해줘.
+아래 기준으로 검토해:
+1. CLAUDE.md 코드 컨벤션 준수 여부 (파일명, 타입명, any 사용 등)
+2. 수정 허용 파일 외 변경된 파일 없는지
+3. isUnlocked 상태가 API 응답 기반으로만 전환되는지
+4. API Key가 서버사이드에서만 사용되는지
+5. 블러 처리 패턴이 정확히 적용되었는지 (blur-sm pointer-events-none select-none)
+6. TypeScript any 없는지
+이슈 발견 시 → 파일명:라인수 형태로 목록화하고, Codex에게 수정 지시사항을 작성해줘.
+(이슈 없으면 바로 ⑥으로 진행)
+```
+
+> 이슈 있으면 아래 ③''로 Codex 수정 → 완료 후 ⑤ 재검토
+
+**③'' 리뷰 이슈 수정 (선택)**
+```
+아래 이슈를 수정해줘: [Claude Code가 작성한 수정 지시사항]
+수정 완료 후 npm run lint, npm run build 결과 포함해서 보고해줘.
+```
+
+**⑥ 검증 + 문서 업데이트**
+```
+npm run lint, npm run build 실행해서 검증해줘.
+에러 없으면 /verify-implementation 실행하고,
+검증 통과 시 아래를 한번에 진행해줘:
+- ROADMAP.md Phase N 체크박스 업데이트
+- CHANGELOG.md에 완료 이력 추가
+- /manage-skills 실행해서 새 파일/패턴이 verify 스킬에 커버되는지 확인
+```
+
+**⑦ 세션 종료**
+```
+수고했어
+```
 
 ---
 

@@ -1,0 +1,63 @@
+#!/bin/sh
+# ----------------------------------------------------------------------------
+# Apache Maven Wrapper startup script, version 3.2.0
+# ----------------------------------------------------------------------------
+
+set -eu
+
+if [ "${MVNW_VERBOSE-}" = true ]; then
+  set -x
+fi
+
+if [ -z "${JAVA_HOME-}" ]; then
+  JAVACMD="$(command -v java 2>/dev/null || true)"
+else
+  JAVACMD="$JAVA_HOME/bin/java"
+fi
+
+if [ -z "${JAVACMD}" ] || [ ! -x "${JAVACMD}" ]; then
+  echo "Error: JAVA_HOME is not set correctly or java is not available." >&2
+  exit 1
+fi
+
+SCRIPT="$0"
+while [ -h "$SCRIPT" ]; do
+  LS="$(ls -ld "$SCRIPT")"
+  LINK="$(expr "$LS" : '.*-> \(.*\)$')"
+  if expr "$LINK" : '/.*' >/dev/null; then
+    SCRIPT="$LINK"
+  else
+    SCRIPT="$(dirname "$SCRIPT")/$LINK"
+  fi
+done
+
+MVNW_DIR="$(cd "$(dirname "$SCRIPT")" && pwd -P)"
+BASE_DIR="$MVNW_DIR"
+WRAPPER_JAR="$BASE_DIR/.mvn/wrapper/maven-wrapper.jar"
+WRAPPER_PROPERTIES="$BASE_DIR/.mvn/wrapper/maven-wrapper.properties"
+
+if [ ! -f "$WRAPPER_JAR" ]; then
+  if [ ! -f "$WRAPPER_PROPERTIES" ]; then
+    echo "Error: $WRAPPER_PROPERTIES does not exist." >&2
+    exit 1
+  fi
+
+  WRAPPER_URL="$(grep -E '^wrapperUrl=' "$WRAPPER_PROPERTIES" | tail -n 1 | cut -d'=' -f2-)"
+  if [ -z "$WRAPPER_URL" ]; then
+    WRAPPER_URL="https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.2.0/maven-wrapper-3.2.0.jar"
+  fi
+
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$WRAPPER_URL" -o "$WRAPPER_JAR"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -q -O "$WRAPPER_JAR" "$WRAPPER_URL"
+  else
+    echo "Error: Could not find curl or wget to download Maven wrapper jar." >&2
+    exit 1
+  fi
+fi
+
+exec "$JAVACMD" \
+  -Dmaven.multiModuleProjectDirectory="$BASE_DIR" \
+  -classpath "$WRAPPER_JAR" \
+  org.apache.maven.wrapper.MavenWrapperMain "$@"

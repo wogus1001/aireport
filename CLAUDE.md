@@ -8,6 +8,7 @@
 |-------|---------|
 | `verify-implementation` | 프로젝트의 모든 verify 스킬을 순차 실행하여 통합 검증 보고서를 생성합니다 |
 | `manage-skills` | 세션 변경사항을 분석하고, 검증 스킬을 생성/업데이트하며, CLAUDE.md를 관리합니다 |
+| `verify-nextjs` | Next.js 보안 규칙 및 코딩 컨벤션을 검증합니다 (API Key 보안, CORS, isUnlocked 패턴, any 금지) |
 
 ## 참조 문서
 
@@ -167,20 +168,25 @@ JSON 형식으로만 응답받도록 강제:
 
 ## 파일 소유권
 
-### Claude Code 전용 (수정 금지 대상)
+### Codex 수정 허용
+
+| 경로 | 조건 |
+|------|------|
+| `frontend/app/**` | 자유롭게 수정 |
+| `frontend/components/**` | 자유롭게 수정 |
+| `frontend/lib/**` | 자유롭게 수정 |
+| `backend/src/**` | 자유롭게 수정 |
+| `frontend/package.json` | Claude Code 사전 승인 후에만 |
+| `backend/pom.xml` | Claude Code 사전 승인 후에만 |
+
+### Codex 수정 금지 (Claude Code 전용)
 
 | 경로 | 이유 |
 |------|------|
 | `*.md` (모든 마크다운) | 문서 일관성 유지 |
 | `.claude/skills/**` | 스킬 시스템 관리 |
 
-### 자유 수정 허용
-
-| 경로 | 비고 |
-|------|------|
-| `frontend/app/**` | Next.js 앱 코드 |
-| `frontend/components/**` | 리액트 컴포넌트 |
-| `backend/src/**` | Spring Boot 소스 |
+> **Codex 구현 지시사항은 `handoff.md`의 `Codex 구현 스펙` 섹션에서만 읽는다.**
 
 ---
 

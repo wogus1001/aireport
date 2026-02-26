@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(head:*)",
+      "Bash(cd \"C:/Users/awmve/OneDrive/바탕 화면/aireport/frontend\" && npm run lint 2>&1)",
+      "Bash(npm run:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "serena",
+    "playwright",
+    "context7",
+    "sequential-thinking"
+  ]
+}
